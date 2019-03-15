@@ -88,11 +88,25 @@ namespace LogonVisualizer
             return $"{duration.TotalMilliseconds:0.#######} ms";
         }
 
-        public string FormatSid(SecurityIdentifier securityIdentifier)
+        public string FormatUsername(SecurityIdentifier securityIdentifier, string username, string domain)
         {
             if (!formattedSecurityIdentifiers.TryGetValue(securityIdentifier, out var formatted))
             {
-                formatted = TryGetUsername(securityIdentifier) ?? securityIdentifier.Value;
+                formatted = TryGetUsername(securityIdentifier);
+
+                if (formatted is null)
+                {
+                    if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(domain))
+                    {
+                        formatted = domain.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase)
+                            ? username
+                            : domain + '\\' + username;
+                    }
+                    else
+                    {
+                        formatted = securityIdentifier.Value;
+                    }
+                }
 
                 formattedSecurityIdentifiers.Add(securityIdentifier, formatted);
             }

@@ -13,6 +13,8 @@ namespace LogonVisualizer.Events
             ulong logonId,
             ulong linkedLogonId,
             SecurityIdentifier user,
+            string userName,
+            string domainName,
             LogonType logonType,
             bool elevatedToken,
             string workstationName,
@@ -24,6 +26,8 @@ namespace LogonVisualizer.Events
             LogonId = logonId;
             LinkedLogonId = linkedLogonId;
             User = user;
+            UserName = userName;
+            DomainName = domainName;
             LogonType = logonType;
             ElevatedToken = elevatedToken;
             WorkstationName = workstationName;
@@ -35,6 +39,8 @@ namespace LogonVisualizer.Events
         public ulong LogonId { get; }
         public ulong LinkedLogonId { get; }
         public SecurityIdentifier User { get; }
+        public string UserName { get; }
+        public string DomainName { get; }
         public LogonType LogonType { get; }
         public bool ElevatedToken { get; }
         public string WorkstationName { get; }

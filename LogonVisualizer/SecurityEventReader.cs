@@ -37,6 +37,8 @@ namespace LogonVisualizer
                 "Event/EventData/Data[@Name='TargetLogonId']",
                 "Event/EventData/Data[@Name='TargetLinkedLogonId']",
                 "Event/EventData/Data[@Name='TargetUserSid']",
+                "Event/EventData/Data[@Name='TargetUserName']",
+                "Event/EventData/Data[@Name='TargetDomainName']",
                 "Event/EventData/Data[@Name='LogonType']",
                 "Event/EventData/Data[@Name='ElevatedToken']",
                 "Event/EventData/Data[@Name='WorkstationName']",
@@ -67,12 +69,14 @@ namespace LogonVisualizer
                                 logonId: (ulong)loginPropertyValues[0],
                                 linkedLogonId: (ulong)loginPropertyValues[1],
                                 user: (SecurityIdentifier)loginPropertyValues[2],
-                                logonType: (LogonType)(uint)loginPropertyValues[3],
-                                elevatedToken: loginPropertyValues[4] is "%%1842",
-                                workstationName: GetXPathString(loginPropertyValues[5]),
-                                processName: GetXPathString(loginPropertyValues[6]),
-                                ipAddress: GetXPathString(loginPropertyValues[7]),
-                                ipPort: GetXPathString(loginPropertyValues[8])));
+                                userName: (string)loginPropertyValues[3],
+                                domainName: (string)loginPropertyValues[4],
+                                logonType: (LogonType)(uint)loginPropertyValues[5],
+                                elevatedToken: loginPropertyValues[6] is "%%1842",
+                                workstationName: GetXPathString(loginPropertyValues[7]),
+                                processName: GetXPathString(loginPropertyValues[8]),
+                                ipAddress: GetXPathString(loginPropertyValues[9]),
+                                ipPort: GetXPathString(loginPropertyValues[10])));
                             break;
 
                         case 4634:

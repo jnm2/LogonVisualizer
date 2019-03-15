@@ -120,7 +120,7 @@ namespace LogonVisualizer
         private static string FormatLogonEvent(LogonEvent logonEvent, DateTime? logoffTime)
         {
             var builder = new StringBuilder();
-            builder.Append(Formatter.FormatSid(logonEvent.User));
+            builder.Append(Formatter.FormatUsername(logonEvent.User, logonEvent.UserName, logonEvent.DomainName));
 
             switch (logonEvent.LogonType)
             {

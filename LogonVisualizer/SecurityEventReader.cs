@@ -30,7 +30,7 @@ namespace LogonVisualizer
                         and Data[@Name='TargetUserSid']!='S-1-5-18'
                         and Data[@Name='TargetDomainName']!='Font Driver Host'
                         and Data[@Name='TargetDomainName']!='Window Manager'])
-                    or System[EventID=4647 or EventID=4608]]");
+                    or System[EventID=4647 or EventID=4608 or EventID=4798]]");
 
             using (var loginEventPropertySelector = new EventLogPropertySelector(new[]
             {
@@ -48,6 +48,10 @@ namespace LogonVisualizer
             {
                 "Event/EventData/Data[@Name='TargetLogonId']",
                 "Event/EventData/Data[@Name='TargetUserSid']"
+            }))
+            using (var userAccountManagementPropertySelector = new EventLogPropertySelector(new[]
+            {
+                "Event/EventData/Data[@Name='CallerProcessName']"
             }))
             using (var reader = new EventLogReader(query))
             {
@@ -83,6 +87,14 @@ namespace LogonVisualizer
                                 ev.TimeCreated.Value,
                                 logonId: (ulong)logoffPropertyValues[0],
                                 user: (SecurityIdentifier)logoffPropertyValues[1]));
+                            break;
+
+                        case 4798:
+                            var userAccountManagementPropertyValues = ((EventLogRecord)ev).GetPropertyValues(userAccountManagementPropertySelector);
+
+                            events.Add(new UserAccountManagementEvent(
+                                ev.TimeCreated.Value,
+                                callerProcessName: GetXPathString(userAccountManagementPropertyValues[0])));
                             break;
                     }
                 }

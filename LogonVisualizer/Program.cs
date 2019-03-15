@@ -40,6 +40,8 @@ namespace LogonVisualizer
             var logonsById = new Dictionary<ulong, LogonEvent>();
             var logonRanges = new List<(LogonEvent logon, DateTime? logoffTime)>();
 
+            var logonUIProcessName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "LogonUI.exe");
+
             foreach (var ev in SecurityEventReader.ReadAll())
             {
                 switch (ev)
@@ -58,10 +60,21 @@ namespace LogonVisualizer
                         logonsById.Add(logon.LogonId, logon);
                         break;
                     }
-                    case LogoffEvent logoff when logonsById.TryGetValue(logoff.LogonId, out var logon):
+                    case LogoffEvent logoff:
                     {
-                        logonRanges.Add((logon, logoff.Time));
-                        logonsById.Remove(logoff.LogonId);
+                        if (logonsById.TryGetValue(logoff.LogonId, out var logon))
+                        {
+                            logonRanges.Add((logon, logoff.Time));
+                            logonsById.Remove(logoff.LogonId);
+                        }
+                        break;
+                    }
+                    case UserAccountManagementEvent management:
+                    {
+                        if (logonUIProcessName.Equals(management.CallerProcessName, StringComparison.OrdinalIgnoreCase))
+                        {
+
+                        }
                         break;
                     }
                 }

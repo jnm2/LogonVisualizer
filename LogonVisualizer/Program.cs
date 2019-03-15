@@ -10,15 +10,15 @@ namespace LogonVisualizer
 {
     public static class Program
     {
+        private static readonly Formatter Formatter = new Formatter(today: DateTime.Today, CultureInfo.CurrentCulture);
+
         public static void Main()
         {
             var ranges = MergeLinkedLogons(GetLogonRanges());
 
-            var today = DateTime.Today;
-
             foreach (var group in ranges
                 .Where(r => r.logoffTime != null)
-                .GroupBy(r => Formatter.GetDateGrouping(r.logoffTime.Value, today, DateTimeFormatInfo.CurrentInfo))
+                .GroupBy(r => Formatter.GetDateGrouping(r.logoffTime.Value))
                 .OrderBy(g => g.First().logoffTime.Value))
             {
                 Console.WriteLine($"Ending {group.Key}:");
@@ -123,7 +123,6 @@ namespace LogonVisualizer
             return merged;
         }
 
-        private static readonly Formatter Formatter = new Formatter();
         private static readonly string ExpectedProcessName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "svchost.exe");
 
         private static string FormatLogonEvent(LogonEvent logonEvent, DateTime? logoffTime)

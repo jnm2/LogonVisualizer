@@ -10,7 +10,15 @@ namespace LogonVisualizer
     {
         private static readonly string MachineNamePrefix = Environment.MachineName + '\\';
 
+        private readonly DateTime today;
+        private readonly CultureInfo cultureInfo;
         private readonly Dictionary<SecurityIdentifier, string> formattedSecurityIdentifiers = new Dictionary<SecurityIdentifier, string>();
+
+        public Formatter(DateTime today, CultureInfo cultureInfo)
+        {
+            this.today = today.Date;
+            this.cultureInfo = cultureInfo ?? throw new ArgumentNullException(nameof(cultureInfo));
+        }
 
         public static void FormatTime(StringBuilder builder, DateTime date, string datePrefix = null)
         {
@@ -89,17 +97,15 @@ namespace LogonVisualizer
             return $"{duration.TotalMilliseconds:0.#######} ms";
         }
 
-        public static string GetDateGrouping(DateTime date, DateTime today, DateTimeFormatInfo formatInfo)
+        public string GetDateGrouping(DateTime date)
         {
-            if (formatInfo is null) throw new ArgumentNullException(nameof(formatInfo));
-
             var daysAgo = (int)(today.Date - date.Date).TotalDays;
 
             if (daysAgo < 0) throw new NotImplementedException();
             if (daysAgo == 0) return "today";
             if (daysAgo == 1) return "yesterday";
 
-            var startOfWeek = today.StartOfWeek(formatInfo);
+            var startOfWeek = today.StartOfWeek(cultureInfo.DateTimeFormat);
             if (date >= startOfWeek) return "earlier this week";
             if (date >= startOfWeek.AddDays(-7)) return "last week";
 
@@ -108,10 +114,10 @@ namespace LogonVisualizer
                 if (date.Month == today.Month) return "earlier this month";
                 if (date.Month == today.Month - 1) return "last month";
 
-                return "earlier in " + date.Year.ToString("yyyy", formatInfo);
+                return "earlier in " + date.ToString("yyyy", cultureInfo);
             }
 
-            return date.ToString("yyyy", formatInfo);
+            return date.ToString("yyyy", cultureInfo);
         }
 
         public string FormatUsername(SecurityIdentifier securityIdentifier, string username, string domain)

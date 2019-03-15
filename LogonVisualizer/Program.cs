@@ -9,12 +9,36 @@ namespace LogonVisualizer
 {
     public static class Program
     {
-        private static readonly Formatter Formatter = new Formatter();
-
         public static void Main()
         {
+            var ranges = MergeLinkedLogons(GetLogonRanges());
+
+            Console.WriteLine("Older:");
+            Console.WriteLine();
+
+            foreach (var (logon, logoffTime) in ranges
+                .Where(r => r.logoffTime != null)
+                .OrderBy(r => r.logon.Time))
+            {
+                Console.WriteLine(FormatLogonEvent(logon, logoffTime));
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Currently logged on:");
+            Console.WriteLine();
+
+            foreach (var (logon, _) in ranges
+                .Where(r => r.logoffTime is null)
+                .OrderBy(r => r.logon.Time))
+            {
+                Console.WriteLine(FormatLogonEvent(logon, logoffTime: null));
+            }
+        }
+
+        private static IReadOnlyList<(LogonEvent logon, DateTime? logoffTime)> GetLogonRanges()
+        {
             var logonsById = new Dictionary<ulong, LogonEvent>();
-            var logonRanges = new List<(LogonEvent logon, DateTime logoffTime)>();
+            var logonRanges = new List<(LogonEvent logon, DateTime? logoffTime)>();
 
             foreach (var ev in SecurityEventReader.ReadAll())
             {
@@ -24,7 +48,7 @@ namespace LogonVisualizer
                     {
                         foreach (var logon in logonsById.Values.OrderBy(l => l.Time))
                         {
-                            logonRanges.Add((logon, ev.Time));
+                            logonRanges.Add((logon, logoffTime: ev.Time));
                         }
                         logonsById.Clear();
                         break;
@@ -43,24 +67,54 @@ namespace LogonVisualizer
                 }
             }
 
-            Console.WriteLine("Older:");
-            Console.WriteLine();
-
-            foreach (var (logon, logoffTime) in logonRanges.OrderBy(r => r.logon.Time))
+            foreach (var logon in logonsById.Values)
             {
-                Console.WriteLine(FormatLogonEvent(logon, logoffTime));
+                logonRanges.Add((logon, logoffTime: null));
             }
 
-            Console.WriteLine();
-            Console.WriteLine("Currently logged on:");
-            Console.WriteLine();
-
-            foreach (var logon in logonsById.Values.OrderBy(l => l.Time))
-            {
-                Console.WriteLine(FormatLogonEvent(logon, logoffTime: null));
-            }
+            return logonRanges;
         }
 
+        private static IReadOnlyList<(LogonEvent logon, DateTime? logoffTime)> MergeLinkedLogons(IReadOnlyList<(LogonEvent logon, DateTime? logoffTime)> logonRanges)
+        {
+            var rangesByLogonId = logonRanges.ToDictionary(r => r.logon.LogonId);
+            var skip = new HashSet<ulong>();
+
+            var merged = new List<(LogonEvent logon, DateTime? logoffTime)>();
+
+            foreach (var range in logonRanges)
+            {
+                if (skip.Contains(range.logon.LogonId)) continue;
+
+                if (range.logon.LinkedLogonId != 0
+                    && rangesByLogonId.TryGetValue(range.logon.LinkedLogonId, out var linkedRange))
+                {
+                    if (linkedRange.logon.LinkedLogonId != range.logon.LogonId)
+                    {
+                        throw new NotImplementedException("Expected logins to be linked in pairs.");
+                    }
+
+                    skip.Add(range.logon.LinkedLogonId);
+
+                    merged.Add((
+                        range.logon.Time < linkedRange.logon.Time
+                            ? range.logon
+                            : linkedRange.logon,
+                        range.logoffTime is null
+                        || (linkedRange.logoffTime != null && range.logoffTime.Value < linkedRange.logoffTime.Value)
+                            ? range.logoffTime
+                            : linkedRange.logoffTime));
+                }
+                else
+                {
+                    merged.Add(range);
+                }
+            }
+
+            return merged;
+        }
+
+        private static readonly Formatter Formatter = new Formatter();
         private static readonly string ExpectedProcessName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "svchost.exe");
 
         private static string FormatLogonEvent(LogonEvent logonEvent, DateTime? logoffTime)

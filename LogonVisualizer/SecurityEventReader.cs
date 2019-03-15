@@ -35,6 +35,7 @@ namespace LogonVisualizer
             using (var loginEventPropertySelector = new EventLogPropertySelector(new[]
             {
                 "Event/EventData/Data[@Name='TargetLogonId']",
+                "Event/EventData/Data[@Name='TargetLinkedLogonId']",
                 "Event/EventData/Data[@Name='TargetUserSid']",
                 "Event/EventData/Data[@Name='LogonType']",
                 "Event/EventData/Data[@Name='ElevatedToken']",
@@ -64,13 +65,14 @@ namespace LogonVisualizer
                             events.Add(new LogonEvent(
                                 ev.TimeCreated.Value,
                                 logonId: (ulong)loginPropertyValues[0],
-                                user: (SecurityIdentifier)loginPropertyValues[1],
-                                logonType: (LogonType)(uint)loginPropertyValues[2],
-                                elevatedToken: loginPropertyValues[3] is "%%1842",
-                                workstationName: GetXPathString(loginPropertyValues[4]),
-                                processName: GetXPathString(loginPropertyValues[5]),
-                                ipAddress: GetXPathString(loginPropertyValues[6]),
-                                ipPort: GetXPathString(loginPropertyValues[7])));
+                                linkedLogonId: (ulong)loginPropertyValues[1],
+                                user: (SecurityIdentifier)loginPropertyValues[2],
+                                logonType: (LogonType)(uint)loginPropertyValues[3],
+                                elevatedToken: loginPropertyValues[4] is "%%1842",
+                                workstationName: GetXPathString(loginPropertyValues[5]),
+                                processName: GetXPathString(loginPropertyValues[6]),
+                                ipAddress: GetXPathString(loginPropertyValues[7]),
+                                ipPort: GetXPathString(loginPropertyValues[8])));
                             break;
 
                         case 4634:

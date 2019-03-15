@@ -11,6 +11,7 @@ namespace LogonVisualizer.Events
         public LogonEvent(
             DateTime time,
             ulong logonId,
+            ulong linkedLogonId,
             SecurityIdentifier user,
             LogonType logonType,
             bool elevatedToken,
@@ -21,6 +22,7 @@ namespace LogonVisualizer.Events
             : base(time)
         {
             LogonId = logonId;
+            LinkedLogonId = linkedLogonId;
             User = user;
             LogonType = logonType;
             ElevatedToken = elevatedToken;
@@ -31,6 +33,7 @@ namespace LogonVisualizer.Events
         }
 
         public ulong LogonId { get; }
+        public ulong LinkedLogonId { get; }
         public SecurityIdentifier User { get; }
         public LogonType LogonType { get; }
         public bool ElevatedToken { get; }

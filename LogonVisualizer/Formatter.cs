@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Security.Principal;
 using System.Text;
 
@@ -86,6 +87,31 @@ namespace LogonVisualizer
             }
 
             return $"{duration.TotalMilliseconds:0.#######} ms";
+        }
+
+        public static string GetDateGrouping(DateTime date, DateTime today, DateTimeFormatInfo formatInfo)
+        {
+            if (formatInfo is null) throw new ArgumentNullException(nameof(formatInfo));
+
+            var daysAgo = (int)(today.Date - date.Date).TotalDays;
+
+            if (daysAgo < 0) throw new NotImplementedException();
+            if (daysAgo == 0) return "today";
+            if (daysAgo == 1) return "yesterday";
+
+            var startOfWeek = today.StartOfWeek(formatInfo);
+            if (date >= startOfWeek) return "earlier this week";
+            if (date >= startOfWeek.AddDays(-7)) return "last week";
+
+            if (date.Year == today.Year)
+            {
+                if (date.Month == today.Month) return "earlier this month";
+                if (date.Month == today.Month - 1) return "last month";
+
+                return "earlier in " + date.Year.ToString("yyyy", formatInfo);
+            }
+
+            return date.ToString("yyyy", formatInfo);
         }
 
         public string FormatUsername(SecurityIdentifier securityIdentifier, string username, string domain)

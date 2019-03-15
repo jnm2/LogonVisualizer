@@ -1,6 +1,7 @@
 ﻿using LogonVisualizer.Events;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,17 +14,25 @@ namespace LogonVisualizer
         {
             var ranges = MergeLinkedLogons(GetLogonRanges());
 
-            Console.WriteLine("Older:");
-            Console.WriteLine();
+            var today = DateTime.Today;
 
-            foreach (var (logon, logoffTime) in ranges
+            foreach (var group in ranges
                 .Where(r => r.logoffTime != null)
-                .OrderBy(r => r.logon.Time))
+                .GroupBy(r => Formatter.GetDateGrouping(r.logoffTime.Value, today, DateTimeFormatInfo.CurrentInfo))
+                .OrderBy(g => g.First().logoffTime.Value))
             {
-                Console.WriteLine(FormatLogonEvent(logon, logoffTime));
+                Console.WriteLine($"Ending {group.Key}:");
+                Console.WriteLine();
+
+                foreach (var (logon, logoffTime) in group
+                    .OrderBy(r => r.logon.Time))
+                {
+                    Console.WriteLine(FormatLogonEvent(logon, logoffTime));
+                }
+
+                Console.WriteLine();
             }
 
-            Console.WriteLine();
             Console.WriteLine("Currently logged on:");
             Console.WriteLine();
 
@@ -119,7 +128,7 @@ namespace LogonVisualizer
 
         private static string FormatLogonEvent(LogonEvent logonEvent, DateTime? logoffTime)
         {
-            var builder = new StringBuilder();
+            var builder = new StringBuilder(" - ");
             builder.Append(Formatter.FormatUsername(logonEvent.User, logonEvent.UserName, logonEvent.DomainName));
 
             switch (logonEvent.LogonType)

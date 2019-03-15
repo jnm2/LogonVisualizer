@@ -20,9 +20,8 @@ namespace LogonVisualizer
             this.cultureInfo = cultureInfo ?? throw new ArgumentNullException(nameof(cultureInfo));
         }
 
-        public static void FormatTime(StringBuilder builder, DateTime date, string datePrefix = null)
+        public void FormatTime(StringBuilder builder, DateTime date, string datePrefix = null)
         {
-            var today = DateTime.Today;
             var daysAgo = (int)(today - date.Date).TotalDays;
 
             if (daysAgo >= 0 && daysAgo < 2)
@@ -34,19 +33,19 @@ namespace LogonVisualizer
                 if (datePrefix != null)
                     builder.Append(datePrefix).Append(' ');
 
-                builder.Append(date.ToString(date.Year == today.Year ? "MMM d" : "MMM d, yyyy"));
+                builder.Append(date.ToString(date.Year == today.Year ? "MMM d" : "MMM d, yyyy", cultureInfo));
             }
 
             builder.Append(" at ");
-            builder.Append(date.ToShortTimeString());
+            builder.Append(date.ToString("t", cultureInfo));
         }
 
-        public static void FormatRange(StringBuilder builder, DateTime start, DateTime end)
+        public void FormatRange(StringBuilder builder, DateTime start, DateTime end)
         {
             var duration = end - start;
 
             builder.Append("for ");
-            builder.Append(FormatDuration(duration));
+            FormatDuration(builder, duration);
 
             if (duration.TotalHours < 1)
             {
@@ -62,39 +61,45 @@ namespace LogonVisualizer
             }
         }
 
-        public static string FormatDuration(TimeSpan duration)
+        public void FormatDuration(StringBuilder builder, TimeSpan duration)
         {
             if (duration.TotalDays >= 2)
             {
                 var days = (int)Math.Round(duration.TotalDays);
-
-                if (duration.TotalDays >= 7)
+                if (days >= 7)
                 {
-                    return $"{days / 7:n0} wk {days % 7:n0} days";
+                    builder.Append((days / 7).ToString(cultureInfo));
+                    builder.Append(" wk");
                 }
-                else
-                {
-                    return $"{days} days";
-                }
-            }
-            if (duration.TotalHours >= 1)
-            {
-                return $"{duration.Hours} hr {duration.Minutes} min";
-            }
-            if (duration.TotalMinutes >= 1)
-            {
-                return $"{duration.TotalMinutes:n0} min";
-            }
-            if (duration.TotalSeconds >= 1)
-            {
-                return $"{duration.TotalSeconds:n0} sec";
-            }
-            if (duration.TotalMilliseconds >= 1)
-            {
-                return $"{duration.TotalMilliseconds:n0} ms";
-            }
 
-            return $"{duration.TotalMilliseconds:0.#######} ms";
+                builder.Append((days % 7).ToString(cultureInfo));
+                builder.Append(" days");
+            }
+            else if (duration.TotalHours >= 1)
+            {
+                builder.Append(((int)Math.Floor(duration.TotalHours)).ToString(cultureInfo));
+                builder.Append(" hr ");
+                builder.Append(duration.Minutes.ToString(cultureInfo));
+                builder.Append(" min");
+            }
+            else if (duration.TotalMinutes >= 1)
+            {
+                builder.Append(duration.TotalMinutes.ToString("0", cultureInfo));
+                builder.Append(" min");
+            }
+            else if (duration.TotalSeconds >= 1)
+            {
+                builder.Append(duration.TotalSeconds.ToString("0", cultureInfo));
+                builder.Append(" sec");
+            }
+            else
+            {
+                builder.Append(duration.TotalMilliseconds.ToString(
+                    duration.TotalMilliseconds >= 1 ? "0" : "0.#######",
+                    cultureInfo));
+
+                builder.Append(" ms");
+            }
         }
 
         public string GetDateGrouping(DateTime date)

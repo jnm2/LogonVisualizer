@@ -138,7 +138,12 @@ namespace LogonVisualizer
                     break;
 
                 case LogonType.Network:
-                    builder.Append(" (from ").Append(logonEvent.WorkstationName);
+                    var source =
+                        !string.IsNullOrWhiteSpace(logonEvent.WorkstationName) ? logonEvent.WorkstationName :
+                        !string.IsNullOrWhiteSpace(logonEvent.IpAddress) ? logonEvent.IpAddress :
+                        "network";
+
+                    builder.Append(" (from ").Append(source);
 
                     if (ShouldWriteProcessName(logonEvent))
                         builder.Append(", ").Append(logonEvent.ProcessName);
